@@ -10,7 +10,7 @@
     <style type="text/css">
     div#image {
         padding: 100px;
-        text-align: center;
+        // text-align: center;
     }
     
     div#image img {
@@ -94,6 +94,7 @@
 
     function selectImage(file) {
         if (file.files && file.files[0]) {
+			console.log(file.files[0]);
             $('#mode').hide();
             $('#show').hide().css({
                 width: 0,
