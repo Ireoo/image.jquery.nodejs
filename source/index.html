@@ -253,7 +253,7 @@
                     },
                     success: function(msg) {
                         self.attr('disabled', false);
-                        $('#download').empty().append($('<a />').attr('href', 'http://127.0.0.1:2012/download/' + msg._id).attr('target', '_blank').text('将数据保存到本地'));
+                        $('#download').empty().append($('<a />').attr('href', 'http://127.0.0.1:2012/download/' + msg._id).text('将数据保存到本地'));
                     }
                 });
             });
