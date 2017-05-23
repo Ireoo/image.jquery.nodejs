@@ -231,10 +231,10 @@
                 var data = {
                     ImageDirectory: path,
                     ImageName: name,
-                    X1: x1,
-                    Y1: y1,
-                    X2: x2,
-                    Y2: y2,
+                    X1: (x1 > x2 && y1 > y2) ? x2 : x1,
+                    Y1: (x1 > x2 && y1 > y2) ? y2 : y1,
+                    X2: (x1 > x2 && y1 > y2) ? x1 : x2,
+                    Y2: (x1 > x2 && y1 > y2) ? y1 : y2,
                     W: w,
                     H: h,
                     Property: $('#Property').val()
