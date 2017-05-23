@@ -29,7 +29,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(compress());
 app.set('views', require('path').join(__dirname, 'theme'));
 app.engine('html', ejs.__express);
-app.set('view engine', 'ejs');
+app.set('view engine', 'html');
 
 
 /**

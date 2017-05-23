@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>测试题</title>
+    <script type="text/javascript" src="jquery-3.2.1.min.js"></script>
+    <script type="text/javascript">
+    </script>
+    <style type="text/css">
+        div#image {
+            padding: 100px;
+        }
+        
+        div#image img {
+            vertical-align: bottom;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -khtml-user-select: none;
+            -ms-user-select: none;
+            -o-user-select: none;
+            user-select: none;
+        }
+        
+        div#show {
+            border: 1px solid #000;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <label>导入文件
+        <input id="input" type="file" />
+    </label>
+    <label>选择图片
+        <input id="choose" type="file" />
+    </label>
+    <div id="draw">
+    </div>
+    <br/>
+    <div id="image">
+        <img src="" />
+    </div>
+    <div id="mode" style="display: none;">
+        <select id="Property">
+            <option selected value="1">模式一</option>
+            <option value="2">模式二</option>
+        </select>
+        <button id="restart">重画矩形</button>
+        <div id="mode1" class="mode">
+            <label>选择矩形填充的颜色：
+                <select id="color">
+                </select>
+            </label>
+            <button id="fill">填充颜色</button>
+        </div>
+        <div id="mode2" class="mode" style="display: none;">
+            <label>开始时缩放系数：
+                <input type="number" id="StartScale" value="0.2" />
+            </label>
+            <label>结束时缩放系数：
+                <input type="number" id="EndScale" value="1.2" />
+            </label>
+            <label>动画效果持续时间：
+                <input type="number" id="AnimationTime" value="3000" />
+            </label>
+            <button id="run">开始动画</button>
+        </div>
+        <button id="post">提交数据</button>
+        <div id="download"></div>
+    </div>
+    <div id="show"></div>
+    <script>
+        var fs = require("fs");
+        var path = '',
+            x, y, x1, y1, x2, y2, w, h, run = false,
+            draw = false,
+            mode = false,
+            color = [{
+                name: '红色',
+                value: 'red'
+            }, {
+                name: '绿色',
+                value: 'green'
+            }, {
+                name: '蓝色',
+                value: 'blue'
+            }];
+        for (var i in color) {
+            var option = $('<option />').text(color[i].name).val(parseInt(i) + 1);
+            if (i == 0) option.attr('selected', true);
+            $('#color').append(option);
+        }
+
+        $('#input').change(function(evt) {
+            $('#download').empty();
+            var filename = this.value;
+            fs.readFile(filename, function(err, data) {
+                var datas = data.toString().split("\r\n");
+                var filedata = {};
+                for (var i in datas) {
+                    if (datas[i].trim() !== '结束') {
+                        var t = datas[i].split(': ');
+                        filedata[t[0]] = t[1];
+                    }
+                }
+
+                x1 = parseFloat(filedata.X1);
+                x2 = parseFloat(filedata.X2);
+                y1 = parseFloat(filedata.Y1);
+                y2 = parseFloat(filedata.Y2);
+                w = parseFloat(filedata.W);
+                h = parseFloat(filedata.H);
+                // alert(filedata);
+
+                $('#Property').val(filedata.Property);
+
+                if ($('#Property').val() == 1) {
+                    $('#color').val(filedata.color);
+                } else if ($('#Property').val() == 2) {
+                    $('#StartScale').val(filedata.StartScale);
+                    $('#EndScale').val(filedata.EndScale);
+                    $('#AnimationTime').val(filedata.AnimationTime);
+                }
+
+                $('.mode').hide();
+                $('#mode' + $('#Property').val()).show();
+
+                work(filedata.ImageDirectory + filedata.ImageName);
+            });
+        });
+
+        $('#choose').change(function(evt) {
+            work(this.value);
+        });
+
+        function work(file) {
+            $('div#image img').attr('src', file);
+
+            if (x1) {
+                x = x1 + $('div#image img').offset().left;
+                y = y1 + $('div#image img').offset().top;
+                $('#show').show().css({
+                    'left': x,
+                    'top': y,
+                    'width': w,
+                    'height': h
+                });
+                mode = true;
+                $('#mode').show();
+            }
+
+            $(document).mousedown(function(e) {
+                if (e.button === 0 && !mode) {
+                    x1 = e.clientX - $(this).find('img').offset().left;
+                    y1 = e.clientY - $(this).find('img').offset().top + $(document).scrollTop();
+                    x = e.clientX;
+                    y = e.clientY + $(document).scrollTop();
+                    $('#show').show().css({
+                        'top': y1 + $(this).find('img').offset().top,
+                        'left': x1 + $(this).find('img').offset().left
+                    });
+                    draw = true;
+                }
+            }).mousemove(function(e) {
+                if (draw && !mode) {
+                    x2 = e.clientX - $(this).find('img').offset().left;
+                    y2 = e.clientY - $(this).find('img').offset().top + $(document).scrollTop();
+                    w = Math.abs(x1 - x2);
+                    h = Math.abs(y1 - y2);
+                    x = (x1 > x2 ? x2 : x1) + $(this).find('img').offset().left;
+                    y = (y1 > y2 ? y2 : y1) + $(this).find('img').offset().top;
+                    $('#show').show().css({
+                        'left': x,
+                        'top': y,
+                        'width': w,
+                        'height': h
+                    });
+                }
+            }).mouseup(function(e) {
+                if (!mode) {
+                    draw = false;
+                    if (w > 5 & h > 5) {
+                        mode = true;
+                        $('#mode').show();
+                    }
+                }
+            });
+            $('#Property').change(function() {
+                $('.mode').hide();
+                run = false;
+                $('#show').stop().css({
+                    background: '',
+                    'left': x,
+                    'top': y,
+                    'width': w,
+                    'height': h
+                });
+                $('#mode' + $(this).val()).show();
+            });
+            $('#fill').click(function() {
+                $('#show').css('background', color[$('#color').val() - 1].value);
+                console.log($('#color').val() - 1, color[$('#color').val() - 1].value);
+            });
+            $('#run').click(function() {
+                run = true;
+                runTime();
+            });
+            $('#restart').click(function() {
+                mode = false;
+                $('#mode').hide();
+            });
+
+            $('#post').click(function() {
+                var self = $(this);
+                var paths = file.split('\\');
+                path = '';
+                for (var p = 0; p <= paths.length - 2; p++) {
+                    path += paths[p] + '\\';
+                }
+                var name = paths[paths.length - 1];
+                var data = {
+                    ImageDirectory: path,
+                    ImageName: name,
+                    X1: x1,
+                    Y1: y1,
+                    X2: x2,
+                    Y2: y2,
+                    W: w,
+                    H: h,
+                    Property: $('#Property').val()
+                };
+                if ($('#Property').val() == 1) {
+                    data.color = $('#color').val();
+                } else if ($('#Property').val() == 2) {
+                    data.StartScale = $('#StartScale').val();
+                    data.EndScale = $('#EndScale').val();
+                    data.AnimationTime = $('#AnimationTime').val()
+                }
+                $.ajax({
+                    type: 'post',
+                    url: 'http://127.0.0.1:2012/post',
+                    data: data,
+                    dataType: 'json',
+                    beforeSend: function() {
+                        self.attr('disabled', true);
+                    },
+                    success: function(msg) {
+                        self.attr('disabled', false);
+                        $('#download').empty().append($('<a />').attr('href', 'http://127.0.0.1:2012/download/' + msg._id).attr('target', '_blank').text('将数据保存到本地'));
+                    }
+                });
+            });
+        }
+
+        function runTime() {
+            if (run) {
+                $('#show').css({
+                    left: x + w * ((1 - $('#StartScale').val()) / 2),
+                    top: y + h * ((1 - $('#StartScale').val()) / 2),
+                    width: w * $('#StartScale').val(),
+                    height: h * $('#StartScale').val()
+                }).animate({
+                    left: x + w * ((1 - $('#EndScale').val()) / 2),
+                    top: y + h * ((1 - $('#EndScale').val()) / 2),
+                    width: w * $('#EndScale').val(),
+                    height: h * $('#EndScale').val()
+                }, parseInt($('#AnimationTime').val()), function() {
+                    runTime();
+                });
+            }
+        }
+    </script>
+</body>
+
+</html>
