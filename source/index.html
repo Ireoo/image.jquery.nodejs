@@ -72,6 +72,9 @@
             </label>
             <button id="run">开始动画</button>
         </div>
+        <label>服务器地址:
+			<input type="text" id="host" value="http://127.0.0.1:2012/" />
+		</label>
         <button id="post">提交数据</button>
         <div id="download"></div>
     </div>
@@ -243,9 +246,11 @@
                     data.EndScale = $('#EndScale').val();
                     data.AnimationTime = $('#AnimationTime').val()
                 }
+                var host = $('#host').val();
+                if (host.substr(host.length - 1) != '/') host += "/";
                 $.ajax({
                     type: 'post',
-                    url: 'http://127.0.0.1:2012/post',
+                    url: host + 'post',
                     data: data,
                     dataType: 'json',
                     beforeSend: function() {
@@ -253,7 +258,7 @@
                     },
                     success: function(msg) {
                         self.attr('disabled', false);
-                        $('#download').empty().append($('<a />').attr('href', 'http://127.0.0.1:2012/download/' + msg._id).text('将数据保存到本地'));
+                        $('#download').empty().append($('<a />').attr('href', host + 'download/' + msg._id).text('将数据保存到本地'));
                     }
                 });
             });
